@@ -9,6 +9,12 @@ public class SingleFile {
 	private long filesize = -1;
 	private String md5Checksum = "";
 
+	public SingleFile(String name, String path)
+	{
+		filename = name;
+		filepath = path;
+	}
+	
 	private void setFilename(String input){
     	filename = input;
     }
@@ -25,6 +31,10 @@ public class SingleFile {
         return filepath;
     }
     
+    public String getLocalFilepath(){
+    	return filepath.replace(AssettoSync.assettoRootFolder, "");
+    }
+    
     public long getFilesize(){
     	if(filesize < 0)
     	{
@@ -38,11 +48,11 @@ public class SingleFile {
     public String getmd5Checksum() throws Exception {
  	   if(md5Checksum == "")
  	   {
- 		     byte[] b = createChecksum(filename);
+ 		     byte[] b = createChecksum(filepath);
  		     String result = "";
  		     for (int i=0; i < b.length; i++) {
  		       result +=
- 		          Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
+ 		          Integer.toString( ( b[i] & 0xff ) + 0x100, 16);
  		      }
  		     md5Checksum = result;
  	   }
