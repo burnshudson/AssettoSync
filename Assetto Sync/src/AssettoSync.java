@@ -1,58 +1,122 @@
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.net.*;
+import java.io.*;
 
 public class AssettoSync {
 	private static ArrayList<Car> carList = new ArrayList<>();
 	private static ArrayList<Track> trackList = new ArrayList<>();
+	private static boolean isServer = false;
+	private static String serverAddress = "";
+	private static int serverPort = 1337;
 	
-	 
+	private static int numCarsSynced = 0;
+	private static int numTracksSynced = 0;
+	private static int numCarsAltered = 0;
+	private static int numTracksAltered = 0;
+	
+	
+	private static boolean debugMode = true;
+	
 	
 	public static String assettoRootFolder;
 	
+	//0: string server IP address
+	//1: integer port number
+	//2: string 'true' or 'false' act as server
 	public static void main(String[] args) {
-		assettoRootFolder = "E:\\Steam\\steamapps\\common\\assettocorsa";
+		
+		if (args.length > 1) {
+			serverAddress = args[0];
+			serverPort = Integer.parseInt(args[1]);
+							
+			if (args[2] == "true")
+				isServer = true;
+		}
+		else
+		{
+			System.err.println("Arguments must be in the form of [serverIP] [serverPort]");
+			if(!debugMode)
+				System.exit(1);
+		}
+
+		assettoRootFolder = System.getProperty("user.dir");
+		
+		if(debugMode)
+			assettoRootFolder = "E:\\Steam\\steamapps\\common\\assettocorsa";
 		
 		
-		System.out.println(System.getProperty("user.dir"));
-		System.out.println("Getting car list...");
+		initializeLocal();
+		
+		
+		
+		
+		
+		if(debugMode)
+		{
+			isServer = true;
+			
+			System.out.println(getSingleCarFolderChecksum("sareni_camaro_gt3"));
+			//getSingleCarFolderFilesChecksum("sareni_camaro_gt3");
+
+			System.out.println();
+			System.out.println();
+			
+
+			System.out.println(getSingleTrackFolderChecksum("blackwood"));
+			//getSingleTrackFolderFilesChecksum("blackwood");
+		}
+		System.out.println();
+		System.out.println();
+		System.out.println("AssettoSync complete!");
+		System.out.println("    " + numCarsSynced + " cars synced");
+		System.out.println("    " + numCarsAltered + " cars updated to match");
+		System.out.println("    " + numTracksSynced + " tracks synced");
+		System.out.println("    " + numTracksAltered + " tracks updated to match");
+		
+		
+		if(isServer)
+			Sockets.startServer(serverPort);
+		
+		System.out.println("Code finished.");
+	}
+	
+	
+	private static void initializeLocal()
+	{
+		System.out.println("Getting local car list...");
 		carList = setCarList();
 		System.out.println("Done.");
-		
-		
-		
-		Car temp = getCarByName("sareni_camaro_gt3");
-		
-		System.out.println("Loading car folder checksum....");
-		System.out.println("   Car folder checksum: " + temp.getTotalChecksum());
-		
-		System.out.println();
-		System.out.println();
-		System.out.println("Individual file checksums:");
-		for (SingleFile file : temp.getFileList()) {   
-		    try {
-				System.out.println(file.getLocalFilepath()+ " " + file.getFilesize()/1024 +"kb");
-				System.out.println("  checksum: "+ file.getmd5Checksum());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		    System.out.println();
-		}
-		
 		System.out.println("Getting track list...");
 		trackList = setTrackList();
 		System.out.println("Done.");
+	}
+	
+	private static void replaceLocalCarWithServerCar(String name)
+	{
 		
+	}
+	
+	private static void replaceServerCarWithLocalCar(String name)
+	{
 		
-		
-		Track tempTrack = getTrackByName("blackwood");
-		
-		System.out.println("Loading track folder checksum....");
-		System.out.println("   Track folder checksum: " + tempTrack.getTotalChecksum());
-		
-		System.out.println();
-		System.out.println();
+	}
+	
+	
+	
+//Checksum calls
+	
+	private static String getSingleTrackFolderChecksum(String name)
+	{
+		Track tempTrack = getTrackByName(name);
+		System.out.println("Calculating track folder checksum....");
+		return tempTrack.getTotalChecksum();
+	}
+	
+	private static void getSingleTrackFolderFilesChecksum(String name)
+	{
+		Track tempTrack = getTrackByName(name);
 		System.out.println("Individual file checksums:");
 		for (SingleFile file : tempTrack.getFileList()) {   
 		    try {
@@ -66,6 +130,31 @@ public class AssettoSync {
 		}
 	}
 	
+	private static String getSingleCarFolderChecksum(String name)
+	{	
+		Car temp = getCarByName(name);
+		System.out.println("Calculating car folder checksum....");
+		return temp.getTotalChecksum();
+	}
+	
+	private static void getSingleCarFolderFilesChecksum(String name)
+	{
+		Car temp = getCarByName(name);
+		System.out.println("Individual file checksums:");
+		for (SingleFile file : temp.getFileList()) {   
+		    try {
+				System.out.println(file.getLocalFilepath()+ " " + file.getFilesize()/1024 +"kb");
+				System.out.println("  checksum: "+ file.getmd5Checksum());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		    System.out.println();
+		}
+	}
+	
+	
+//Track and car info calls
 	
 	private static Car getCarByName(String name){
 		System.out.println("Searching for car: " + name);
@@ -91,7 +180,6 @@ public class AssettoSync {
 		return null;
 	}
 	
-
 	private static ArrayList<Car> setCarList() {
 		ArrayList<Car> carListTemp = new ArrayList<>();
 		
